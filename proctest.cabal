@@ -1,0 +1,35 @@
+Name:          proctest
+Version:       0.1
+License:       MIT
+Author:        Niklas Hambüchen
+Category:      Testing
+Build-type:    Simple
+Cabal-version: >= 1.10
+
+Library
+  Default-language: Haskell2010
+  Exposed-modules:
+    Test.Proctest
+  Build-depends:
+      base
+    , process >= 1.1.0.1
+    , bytestring
+    , text
+  ghc-options:
+      -Wall
+
+Executable example-netcat-test
+  Default-language: Haskell2010
+  Hs-source-dirs:
+    ., examples
+  Main-is:
+    netcat-test.hs
+  Build-depends:
+      base
+    , process
+    , bytestring
+    , text
+    , hspec
+    , HUnit
+  ghc-options:
+    -threaded -fwarn-unused-imports
