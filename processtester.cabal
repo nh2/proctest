@@ -1,0 +1,24 @@
+Name:          processtester
+Version:       0.1
+License:       MIT
+Author:        AuthorName
+Category:      Other
+Build-type:    Simple
+Cabal-version: >= 1.10
+
+Executable processtester
+  Default-language: Haskell2010
+  Main-is: Main.hs
+  Build-depends:
+    base,
+    process >= 1.1.0.1,
+    conduit >= 0.5,
+    process-conduit,
+    transformers,
+    bytestring,
+    text,
+    hspec,
+    HUnit
+
+  ghc-options:
+    -threaded
