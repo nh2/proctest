@@ -2,7 +2,6 @@ module Main where
 
 
 import Control.Applicative
-import Control.Concurrent (threadDelay)
 import Test.Hspec
 import Test.HUnit
 import Test.Proctest
@@ -15,7 +14,7 @@ catTest = do
 
   hPutStrLn hIn "test line 1"
 
-  let catWait h = fmap asUtf8Str <$> waitOutputNoEx 10 1000 h -- Wait max 10 ms, 1000 bytes
+  let catWait h = fmap asUtf8Str <$> waitOutputNoEx (seconds 0.01) 1000 h -- Wait max 10 ms, 1000 bytes
 
   response <- catWait hOut
 
@@ -52,7 +51,7 @@ ncTest = hspec $ do
         it "the server is still running" $ serverExitCode @?= Nothing
         it "the client is still running" $ clientExitCode @?= Nothing
 
-        let ncWait h = asUtf8Str <$> waitOutput 10 100 h
+        let ncWait h = asUtf8Str <$> waitOutput (seconds 0.01) 100 h
 
         it "server receives client request" $ do
 
@@ -108,6 +107,7 @@ assertLabel str equalsAssertion = assert (label str equalsAssertion)
 
 
 
+
 ncTestHunit = it "does a simple server <-> client interaction (1)" $ do
 
   (serverIn, serverOut, serverErr, serverP) <- run "nc" ["-l", "1234"]
@@ -122,7 +122,7 @@ ncTestHunit = it "does a simple server <-> client interaction (1)" $ do
 
   setBuffering LineBuffering [clientIn, clientOut, serverIn, serverOut]
 
-  let ncWait h = asUtf8Str <$> waitOutput 10 100 h
+  let ncWait h = asUtf8Str <$> waitOutput (seconds 0.01) 100 h
 
   hPutStrLn clientIn "request 1"
   r <- ncWait serverOut
@@ -133,6 +133,7 @@ ncTestHunit = it "does a simple server <-> client interaction (1)" $ do
   assertLabel "client receives server response" $ r ?== "response 1\n"
 
   terminateProcesses [serverP, clientP]
+
 
 
 ncTestHunitClean = it "does a simple server <-> client interaction (2)" $ do
@@ -153,12 +154,12 @@ ncTestHunitClean = it "does a simple server <-> client interaction (2)" $ do
 
   -- Close
   closeHandles [serverIn, serverOut, clientIn, clientOut]
-  threadDelay (seconds 0.001)
+  sleep (seconds 0.001)
 
   assertLabel "server shut down" =<< assertionExitSuccess serverP
 
   where
-    ncWait h = asUtf8Str <$> waitOutput 10 100 h
+    ncWait h = asUtf8Str <$> waitOutput (seconds 0.01) 100 h
 
     assertionRunning     proc = (?== Nothing)          <$> getProcessExitCode proc
     assertionExitSuccess proc = (?== Just ExitSuccess) <$> getProcessExitCode proc
@@ -173,15 +174,41 @@ ncTestHunitClean = it "does a simple server <-> client interaction (2)" $ do
       return $ r ?== content
 
 
+
+catSpec = describe "cat" $ do
+  it "prints out what we put in" $ do
+
+    -- Start up the program to test
+    (hIn, hOut, hErr, p) <- run "cat" []
+
+    -- Make sure buffering doesn't prevent us from reading what we expect
+    setBuffering LineBuffering [hIn, hOut]
+
+    -- Communicate with the program
+    hPutStrLn hIn "hello world"
+
+    -- Define a convenient wrapper around 'waitOutput'.
+    --
+    -- It specifies how long we have to wait
+    -- (malfunctioning programs shall not block automated testing for too long)
+    -- and how many bytes we are sure the expected response fits into
+    -- (malfunctioning programs shall not flood us with garbage either).
+    let catWait h = asUtf8Str <$> waitOutput (seconds 0.01) 1000 h -- Wait max 10 ms, 1000 bytes
+
+    -- Read the response
+    response <- catWait hOut
+
+    -- Test if it is what we want (here using HUnit's 'expectEqual')
+    response @?= "hello world\n"
+
+
+
 main = do
   -- catTest
   -- ncTest
-  hspec $
+  hspec $ do
+    catSpec
     describe "netcat" $ do
       ncTestHunit
-      -- it "wait a bit" $ do threadDelay 10000000
+      -- it "wait a bit" $ do sleep 10000000
       ncTestHunitClean
-
--- TODO allow stdout/stderr redirection/fuse as in
---   - http://nominolo.blogspot.fr/2010/04/haskell-tip-redirect-stdout-in-haskell.html
---   - http://stackoverflow.com/questions/6736790/how-can-i-combine-handles-in-haskell
