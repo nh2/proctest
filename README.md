@@ -6,6 +6,11 @@ A Haskell library for testing interactive command line programs.
 With Proctest you can write beautiful tests, for example testing `cat` with [hspec](http://hspec.github.com):
 
 ```haskell
+import Control.Applicative
+import Test.Hspec
+import Test.HUnit
+import Test.Proctest
+
 main = hspec $ describe "cat" $ do
   it "prints out what we put in" $ do
 
