@@ -19,8 +19,8 @@ description:   An IO library for testing interactive command line programs
                All blocking operations support timeouts so that misbehaving
                programs cannot block your test pipeline.
                .
-               Feel free contribute to Proctest at
-               <https://github.com/nh2/proctest>
+               Find more examples and contribute at
+               <https://github.com/nh2/proctest>.
 
 build-type:    Simple
 cabal-version: >= 1.10
@@ -53,7 +53,6 @@ executable example-netcat-test
     , hspec
     , HUnit
     , QuickCheck >= 2.4.2
-    , smartcheck
   ghc-options:
     -threaded -fwarn-unused-imports
  
