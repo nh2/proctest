@@ -10,10 +10,11 @@ Read this first:
     If you don't want to be surprised by this, use 'hClose' where you want
     them to be closed (convenience: 'closeHandles').
 
-  - Be sure to use 'hSetBuffering' appropriately, as processes run with 'BlockBuffering'
-    by default (convenience: 'setBuffering').
+  - Make sure handle buffering is set appropriately.
+    'run' sets 'LineBuffering' by default.
+    Change it with 'setBuffering' or 'hSetBuffering'.
 
-  - Dont run the program in a shell (e.g. 'runInteractiveCommand') if you want to
+  - Do not run the program in a shell (e.g. 'runInteractiveCommand') if you want to
     be able to terminate it reliably ('terminateProcess'). Use processes without shells
     ('runInteractiveProcess') instead.
 
@@ -32,7 +33,8 @@ using "Test.HSpec.HUnit" for the IO parts (remember that Proctest /is/ stateful 
 >     (hIn, hOut, hErr, p) <- run "cat" []
 >
 >     -- Make sure buffering doesn't prevent us from reading what we expect
->     setBuffering LineBuffering [hIn, hOut]
+>     -- ('run' sets LineBuffering by default)
+>     setBuffering NoBuffering [hIn, hOut]
 >
 >     -- Communicate with the program
 >     hPutStrLn hIn "hello world"
@@ -44,6 +46,9 @@ using "Test.HSpec.HUnit" for the IO parts (remember that Proctest /is/ stateful 
 >     -- and how many bytes we are sure the expected response fits into
 >     -- (malfunctioning programs shall not flood us with garbage either).
 >     let catWait h = asUtf8Str <$> waitOutput (seconds 0.01) 1000 h -- Wait max 10 ms, 1000 bytes
+>
+>     -- Wait a little to allow `cat` processing the input
+>     sleep (seconds 0.00001)
 >
 >     -- Read the response
 >     response <- catWait hOut

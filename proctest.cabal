@@ -38,5 +38,8 @@ executable example-netcat-test
     , text
     , hspec
     , HUnit
+    , QuickCheck >= 2.4.2
+    , smartcheck
   ghc-options:
-    -threaded -fwarn-unused-imports
+    -threaded -O2 -fwarn-unused-imports
+ 

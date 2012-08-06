@@ -3,14 +3,15 @@ module Main where
 
 import Control.Applicative
 import Test.Hspec
+import Test.Hspec.QuickCheck
 import Test.HUnit
 import Test.Proctest
-
+import Test.QuickCheck (quickCheck, verboseCheck, quickCheckResult)
+import Test.QuickCheck.Property (morallyDubiousIOProperty)
+import Test.SmartCheck
 
 catTest = do
   (hIn, hOut, hErr, p) <- run "cat" []
-
-  setBuffering LineBuffering [hIn, hOut]
 
   hPutStrLn hIn "test line 1"
 
@@ -43,8 +44,6 @@ ncTest = hspec $ do
       -- Make sure processes are running
       serverExitCode <- getProcessExitCode serverP
       clientExitCode <- getProcessExitCode clientP
-
-      setBuffering LineBuffering [clientIn, clientOut, serverIn, serverOut]
 
       return $ describe "after the connection has been set up" $ do
 
@@ -120,8 +119,6 @@ ncTestHunit = it "does a simple server <-> client interaction (1)" $ do
   assertLabel "server is running" $ serverExitCode ?== Nothing
   assertLabel "client is running" $ clientExitCode ?== Nothing
 
-  setBuffering LineBuffering [clientIn, clientOut, serverIn, serverOut]
-
   let ncWait h = asUtf8Str <$> waitOutput (seconds 0.01) 100 h
 
   hPutStrLn clientIn "request 1"
@@ -146,7 +143,7 @@ ncTestHunitClean = it "does a simple server <-> client interaction (2)" $ do
   assertProcessesRunning serverP clientP
 
   -- Buffering
-  setBuffering LineBuffering [clientIn, clientOut, serverIn, serverOut]
+  setBuffering NoBuffering [clientIn, clientOut, serverIn, serverOut]
 
   -- Send
   assertLabel "server receives client request"  =<< popsOut clientIn serverOut "request 1\n"
@@ -182,7 +179,7 @@ catSpec = describe "cat" $ do
     (hIn, hOut, hErr, p) <- run "cat" []
 
     -- Make sure buffering doesn't prevent us from reading what we expect
-    setBuffering LineBuffering [hIn, hOut]
+    setBuffering NoBuffering [hIn, hOut]
 
     -- Communicate with the program
     hPutStrLn hIn "hello world"
@@ -195,6 +192,9 @@ catSpec = describe "cat" $ do
     -- (malfunctioning programs shall not flood us with garbage either).
     let catWait h = asUtf8Str <$> waitOutput (seconds 0.01) 1000 h -- Wait max 10 ms, 1000 bytes
 
+    -- Wait a little to allow `cat` processing the input
+    sleep (seconds 0.00001)
+
     -- Read the response
     response <- catWait hOut
 
@@ -202,8 +202,27 @@ catSpec = describe "cat" $ do
     response @?= "hello world\n"
 
 
+catCheck :: [String] -> IO Bool
+catCheck lines = do
+
+  (hIn, hOut, hErr, p) <- run "cat" []
+
+  let catWait h = asUtf8Str <$> waitOutput (seconds 0.01) 1000 h
+
+      checkLine l = do hPutStrLn hIn l
+                       sleep (seconds 0.00001)
+                       (== (l ++ "\n")) <$> catWait hOut
+
+  and <$> (mapM checkLine lines)
+
+
+catProp inputLines = morallyDubiousIOProperty $ catCheck inputLines
+
+catPropSpec = describe "cat QuickCheck test" $ do
+  prop "it gives back whatever we put in" catProp
 
 main = do
+  -- quickCheckResult catProp >>= print
   -- catTest
   -- ncTest
   hspec $ do
@@ -212,3 +231,12 @@ main = do
       ncTestHunit
       -- it "wait a bit" $ do sleep 10000000
       ncTestHunitClean
+    -- catPropSpec
+  smartCheck scStdArgs catProp
+  where
+    -- args = scStdArgs { -- qcArgs = stdArgs
+    --                               -- { maxSuccess = 1000
+    --                               -- , maxSize = 20 }
+    --                  , treeShow = PrintString
+    --                  }
+
