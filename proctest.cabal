@@ -1,12 +1,26 @@
 name:          proctest
-version:       0.1
+version:       0.1.0.0
 license:       MIT
+license-file:  LICENSE
 author:        Niklas Hambüchen
 copyright:     Copyright: (c) 2012 Niklas Hambüchen
+maintainer:    Niklas Hambüchen <mail@nh2.me>
 category:      Testing
 stability:     experimental
 homepage:      https://github.com/nh2/proctest
 bug-reports:   https://github.com/nh2/proctest/issues
+synopsis:      An IO library for testing interactive command line programs
+description:   An IO library for testing interactive command line programs
+               .
+               Proctest aims to simplify interacting with and testing
+               terminal programs, providing convenience functions
+               for starting programs and reading their output.
+               .
+               All blocking operations support timeouts so that misbehaving
+               programs cannot block your test pipeline.
+               .
+               Feel free contribute to Proctest at
+               <https://github.com/nh2/proctest>
 
 build-type:    Simple
 cabal-version: >= 1.10
@@ -17,7 +31,7 @@ library
   exposed-modules:
     Test.Proctest
   build-depends:
-      base
+      base >= 4 && <= 5
     , process >= 1.1.0.1
     , bytestring
     , text
@@ -32,7 +46,7 @@ executable example-netcat-test
   main-is:
     netcat-test.hs
   build-depends:
-      base
+      base >= 4 && <= 5
     , process
     , bytestring
     , text
@@ -41,5 +55,5 @@ executable example-netcat-test
     , QuickCheck >= 2.4.2
     , smartcheck
   ghc-options:
-    -threaded -O2 -fwarn-unused-imports
+    -threaded -fwarn-unused-imports
  
