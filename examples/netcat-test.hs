@@ -9,12 +9,18 @@ import Test.Proctest
 import Test.QuickCheck.Property (morallyDubiousIOProperty)
 
 
+-- Example of communicating with `cat`.
+--
+-- See below for integration with hspec and hunit.
+catTest :: IO ()
 catTest = do
   (hIn, hOut, hErr, p) <- run "cat" []
 
   hPutStrLn hIn "test line 1"
 
   let catWait h = fmap asUtf8Str <$> waitOutputNoEx (seconds 0.01) 1000 h -- Wait max 10 ms, 1000 bytes
+
+  sleep (seconds 0.00001) -- Give cat time to digest
 
   response <- catWait hOut
 
@@ -31,48 +37,17 @@ catTest = do
     Nothing              -> do putStrLn "process did not quit, killing it"
                                terminateProcess p
 
+{-
+Some convenience for declaring tests:
 
-ncTest = hspec $ do
-  describe "nc" $ do
+  - '?@' for giving the label first, then the monadic action.
 
-    it "does a simple server <-> client interaction" $ do
-      (serverIn, serverOut, serverErr, serverP) <- run "nc" ["-l", "1234"]
-      (clientIn, clientOut, clientErr, clientP) <- run "nc" ["localhost", "1234"]
+  - Separating assertions from their labels:
 
-      -- Make sure processes are running
-      serverExitCode <- getProcessExitCode serverP
-      clientExitCode <- getProcessExitCode clientP
+    -- '?==' creates an assertion
 
-      return $ describe "after the connection has been set up" $ do
-
-        it "the server is still running" $ serverExitCode @?= Nothing
-        it "the client is still running" $ clientExitCode @?= Nothing
-
-        let ncWait h = asUtf8Str <$> waitOutput (seconds 0.01) 100 h
-
-        it "server receives client request" $ do
-
-          hPutStrLn clientIn "request 1"
-          r <- ncWait serverOut
-          r @?= "request 1\n"
-
-        it "client receives server response" $ do
-
-          hPutStrLn serverIn "response 1"
-          r <- ncWait clientOut
-          r @?= "response 1\n"
-
-      closeHandles [clientIn, serverIn, clientOut, serverOut]
-
-      terminateProcesses [serverP, clientP]
-
-      serverExitCode <- getProcessExitCode serverP
-      clientExitCode <- getProcessExitCode clientP
-      return $ describe "after shutting down" $ do
-        it "the server is still running" $ serverExitCode @?= Just ExitSuccess
-        it "the client is still running" $ clientExitCode @?= Just ExitSuccess
-
-
+    -- 'label' optionally labels it
+-}
 
 infix 1 ?@
 (?@) :: (AssertionPredicable t) => String -> t -> Assertion
@@ -95,7 +70,8 @@ instance (Eq a, Show a) => Assertable (EqualAssertion a) where
   assert (EqualAssertion actual expected) = actual @?= expected
 
 instance (Eq a, Show a) => Assertable (LabeledAssertion a) where
-  assert (LabeledAssertion msg (EqualAssertion actual expected)) = assertEqual msg actual expected
+  assert (LabeledAssertion msg (EqualAssertion actual expected)) =
+    assertEqual msg actual expected
 
 assertLabel str equalsAssertion = assert (label str equalsAssertion)
 
@@ -217,12 +193,11 @@ catPropSpec = describe "cat QuickCheck test" $ do
   prop "it gives back whatever we put in" catProp
 
 main = do
-  catTest
-  ncTest
-  -- hspec $ do
-  --   describe "cat" $ do
-  --     catSpec
-  --     catPropSpec
-  --   describe "netcat" $ do
-  --     ncTestHunit
-  --     ncTestHunitClean
+  -- catTest -- This is not a hspec test.
+  hspec $ do
+    describe "cat" $ do
+      catSpec
+      catPropSpec
+    describe "netcat" $ do
+      ncTestHunit
+      ncTestHunitClean
