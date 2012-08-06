@@ -110,8 +110,13 @@ asUtf8Str = unpack . asUtf8
 -- Returns @(stdout, stderr, stdin, process)@. See 'runInteractiveProcess'.
 --
 -- Directly runs the process, does not use a shell.
+--
+-- Sets the 'BufferMode to 'LineBuffering'.
 run :: FilePath -> [String] -> IO (Handle, Handle, Handle, ProcessHandle)
-run cmd args = runInteractiveProcess cmd args Nothing Nothing
+run cmd args = do
+  r@(i, o, e, _) <- runInteractiveProcess cmd args Nothing Nothing
+  setBuffering LineBuffering [i, o, e]
+  return r
 
 -- | Terminates all processes in the list.
 terminateProcesses :: [ProcessHandle] -> IO ()
