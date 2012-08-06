@@ -36,4 +36,9 @@ main = hspec $ describe "cat" $ do
     response @?= "hello world\n"
 ```
 
-[Proctest on Hackage](http://hackage.haskell.org/package/proctest)
+Install
+-------
+
+[Proctest is on Hackage](http://hackage.haskell.org/package/proctest).
+
+`cabal install proctest`
