@@ -6,9 +6,8 @@ import Test.Hspec
 import Test.Hspec.QuickCheck
 import Test.HUnit
 import Test.Proctest
-import Test.QuickCheck (quickCheck, verboseCheck, quickCheckResult)
 import Test.QuickCheck.Property (morallyDubiousIOProperty)
-import Test.SmartCheck
+
 
 catTest = do
   (hIn, hOut, hErr, p) <- run "cat" []
@@ -31,7 +30,6 @@ catTest = do
     Just (ExitFailure n) -> putStrLn $ "process quit with exit code " ++ show n
     Nothing              -> do putStrLn "process did not quit, killing it"
                                terminateProcess p
-
 
 
 ncTest = hspec $ do
@@ -64,10 +62,7 @@ ncTest = hspec $ do
           r <- ncWait clientOut
           r @?= "response 1\n"
 
-      hClose clientIn
-      -- hClose serverIn
-      -- hClose clientOut
-      -- hClose serverOut
+      closeHandles [clientIn, serverIn, clientOut, serverOut]
 
       terminateProcesses [serverP, clientP]
 
@@ -75,7 +70,7 @@ ncTest = hspec $ do
       clientExitCode <- getProcessExitCode clientP
       return $ describe "after shutting down" $ do
         it "the server is still running" $ serverExitCode @?= Just ExitSuccess
-        it "the client is still running" $ clientExitCode @?= Nothing
+        it "the client is still running" $ clientExitCode @?= Just ExitSuccess
 
 
 
@@ -222,21 +217,12 @@ catPropSpec = describe "cat QuickCheck test" $ do
   prop "it gives back whatever we put in" catProp
 
 main = do
-  -- quickCheckResult catProp >>= print
-  -- catTest
-  -- ncTest
-  hspec $ do
-    catSpec
-    describe "netcat" $ do
-      ncTestHunit
-      -- it "wait a bit" $ do sleep 10000000
-      ncTestHunitClean
-    -- catPropSpec
-  smartCheck scStdArgs catProp
-  where
-    -- args = scStdArgs { -- qcArgs = stdArgs
-    --                               -- { maxSuccess = 1000
-    --                               -- , maxSize = 20 }
-    --                  , treeShow = PrintString
-    --                  }
-
+  catTest
+  ncTest
+  -- hspec $ do
+  --   describe "cat" $ do
+  --     catSpec
+  --     catPropSpec
+  --   describe "netcat" $ do
+  --     ncTestHunit
+  --     ncTestHunitClean
