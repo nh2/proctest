@@ -65,6 +65,7 @@ module Test.Proctest (
 
  -- * Running and stopping programs
 , run
+, RunException (..)
 , terminateProcesses
 , closeHandles
 
@@ -116,12 +117,28 @@ asUtf8Str = unpack . asUtf8
 --
 -- Directly runs the process, does not use a shell.
 --
--- Sets the 'BufferMode to 'LineBuffering'.
+-- Sets the 'BufferMode to 'LineBuffering' if successful.
+--
+-- Throws 'CommandNotFound' if the command doesn't exist.
+-- Due to 'createProcess' not throwing an exception
+-- (<http://www.haskell.org/pipermail/haskell-cafe/2012-August/102824.html>),
+-- this is currently implemented by checking if the program
+-- returns early with error code 127.
 run :: FilePath -> [String] -> IO (Handle, Handle, Handle, ProcessHandle)
 run cmd args = do
-  r@(i, o, e, _) <- runInteractiveProcess cmd args Nothing Nothing
-  setBuffering LineBuffering [i, o, e]
-  return r
+  r@(i, o, e, p) <- runInteractiveProcess cmd args Nothing Nothing
+  getProcessExitCode p >>= \me -> case me of
+    -- TODO see if we can make runInteractiveProcess throw the exception instead
+    Just (ExitFailure 127) -> throwIO $ CommandNotFound cmd
+    _                      -> do
+      setBuffering LineBuffering [i, o, e]
+      return r
+
+-- | Exception to be thrown when a program could not be started.
+data RunException = CommandNotFound String
+                    deriving (Show, Typeable)
+
+instance Exception RunException
 
 -- | Terminates all processes in the list.
 terminateProcesses :: [ProcessHandle] -> IO ()
