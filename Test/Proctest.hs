@@ -190,7 +190,7 @@ mkTimeoutS = mkTimeoutUs . (* 1000000) . fromIntegral
 --
 -- Example: @(seconds 0.2)@ are roughly @Micros 200000@.
 seconds :: Float -> Timeout
-seconds s = mkTimeoutUs (round $ s * 10000000)
+seconds s = mkTimeoutUs (round $ s * 1000000)
 
 
 -- | Suspends execution for the given timeout; uses 'threadDelay' internally.
