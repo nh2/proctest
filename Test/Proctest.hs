@@ -66,6 +66,7 @@ module Test.Proctest (
  -- * Running and stopping programs
 , run
 , RunException (..)
+, isRunning
 , terminateProcesses
 , closeHandles
 
@@ -139,6 +140,10 @@ data RunException = CommandNotFound String
                     deriving (Show, Typeable)
 
 instance Exception RunException
+
+-- | Tells whether the given process is still running.
+isRunning :: ProcessHandle -> IO Bool
+isRunning p = do x <- getProcessExitCode p; return (x == Nothing)
 
 -- | Terminates all processes in the list.
 terminateProcesses :: [ProcessHandle] -> IO ()
