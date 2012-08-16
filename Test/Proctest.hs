@@ -149,7 +149,7 @@ closeHandles :: [Handle] -> IO ()
 closeHandles = mapM_ hClose
 
 
--- | A microsecnd timeout, or 'NoTimeout'.
+-- | A microsecond timeout, or 'NoTimeout'.
 data Timeout = NoTimeout | Micros Int
 
 -- | An error to be thrown if something is to be converted into timeout
@@ -158,7 +158,7 @@ data InvalidTimeoutError = InvalidTimeoutError String deriving (Show, Typeable)
 
 instance Exception InvalidTimeoutError
 
--- | Turns the given number of microsecnds into a 'Timeout'.
+-- | Turns the given number of microseconds into a 'Timeout'.
 --
 -- Throws an exception on 'Int' overflow.
 mkTimeoutUs :: Integer -> Timeout
