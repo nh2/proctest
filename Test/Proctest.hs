@@ -80,6 +80,8 @@ module Test.Proctest (
 
 -- * Communicating with programs
 , TimeoutException
+, timeoutToSystemTimeoutArg
+, timeout
 , waitOutput
 , waitOutputNoEx
 , setBuffering
@@ -100,7 +102,7 @@ import qualified Data.ByteString as BS
 import System.Exit
 import System.IO
 import System.Process
-import System.Timeout (timeout)
+import qualified System.Timeout (timeout)
 
 
 -- | Treats a 'BS.ByteString' as UTF-8 decoded 'Text'.
@@ -219,6 +221,12 @@ timeoutToSystemTimeoutArg t = case t of
   Micros n  -> n
   NoTimeout -> -1
 
+
+-- | Overflow-safe version of 'System.Timeout.timeout', using 'Timeout'.
+timeout :: Timeout -> IO a -> IO (Maybe a)
+timeout t = System.Timeout.timeout (timeoutToSystemTimeoutArg t)
+
+
 -- | Blocking wait for output on the given handle.
 --
 -- Returns 'Nothing' timeout is exceeded.
@@ -227,7 +235,7 @@ waitOutputNoEx :: Timeout                   -- ^ Timeout after which reading out
                -> Handle                    -- ^ The handle to read from.
                -> IO (Maybe BS.ByteString)  -- ^ What was read from the handle.
 waitOutputNoEx t maxBytes handle =
-  timeout (timeoutToSystemTimeoutArg t) (BS.hGetSome handle maxBytes)
+  timeout t (BS.hGetSome handle maxBytes)
 
 
 -- | Blocking wait for output on the given handle.
