@@ -81,7 +81,7 @@ module Test.Proctest (
 -- * Communicating with programs
 , TimeoutException
 , timeoutToSystemTimeoutArg
-, timeout
+, withTimeout
 , waitOutput
 , waitOutputNoEx
 , setBuffering
@@ -223,8 +223,8 @@ timeoutToSystemTimeoutArg t = case t of
 
 
 -- | Overflow-safe version of 'System.Timeout.timeout', using 'Timeout'.
-timeout :: Timeout -> IO a -> IO (Maybe a)
-timeout t = System.Timeout.timeout (timeoutToSystemTimeoutArg t)
+withTimeout :: Timeout -> IO a -> IO (Maybe a)
+withTimeout t = System.Timeout.timeout (timeoutToSystemTimeoutArg t)
 
 
 -- | Blocking wait for output on the given handle.
@@ -235,7 +235,7 @@ waitOutputNoEx :: Timeout                   -- ^ Timeout after which reading out
                -> Handle                    -- ^ The handle to read from.
                -> IO (Maybe BS.ByteString)  -- ^ What was read from the handle.
 waitOutputNoEx t maxBytes handle =
-  timeout t (BS.hGetSome handle maxBytes)
+  withTimeout t (BS.hGetSome handle maxBytes)
 
 
 -- | Blocking wait for output on the given handle.
