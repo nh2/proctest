@@ -9,6 +9,10 @@ Read this first:
   - Beware that the Haskell GC closes process 'Handle's after their last use.
     If you don't want to be surprised by this, use 'hClose' where you want
     them to be closed (convenience: 'closeHandles').
+    Really do this for EVERY process you create, the behaviour of a program
+    writing to a closed handle is undefined. For example,
+    'getProcessExitCode' run on such a program somtimes seems to
+    always return 'ExitSuccess', no matter what the program actually does.
 
   - Make sure handle buffering is set appropriately.
     'run' sets 'LineBuffering' by default.
@@ -70,6 +74,7 @@ module Test.Proctest (
 , isRunning
 , terminateProcesses
 , closeHandles
+, closeProcessHandles
 
 -- * Timeouts
 , Timeout (NoTimeout)
@@ -159,6 +164,15 @@ terminateProcesses = mapM_ terminateProcess
 -- | Closes all handles in the list.
 closeHandles :: [Handle] -> IO ()
 closeHandles = mapM_ hClose
+
+-- | Closes all file handles to all given handle-process-tuples.
+--
+-- Use this to make sure that handles are not closed due to garbage
+-- collection (see "System.IO") while your processes are still running.
+--
+-- It is safe to call this on processes which have already exited.
+closeProcessHandles :: [ProcessHandles] -> IO ()
+closeProcessHandles = mapM_ $ \(i, o, e, _) -> closeHandles [i, o, e]
 
 
 -- | A microsecond timeout, or 'NoTimeout'.
