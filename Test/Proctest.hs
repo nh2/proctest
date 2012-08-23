@@ -201,7 +201,7 @@ mkTimeoutS = mkTimeoutUs . (* 1000000) . fromIntegral
 -- Throws an exception on 'Int' overflow.
 --
 -- Example: @(seconds 0.2)@ are roughly @Micros 200000@.
-seconds :: Float -> Timeout
+seconds :: Double -> Timeout
 seconds s = mkTimeoutUs (round $ s * 1000000)
 
 
