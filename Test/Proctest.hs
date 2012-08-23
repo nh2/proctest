@@ -162,7 +162,7 @@ closeHandles = mapM_ hClose
 
 
 -- | A microsecond timeout, or 'NoTimeout'.
-data Timeout = NoTimeout | Micros Int
+data Timeout = Micros Int | NoTimeout deriving (Eq, Ord, Show)
 
 -- | An error to be thrown if something is to be converted into 'Timeout'
 -- that does not fit into 'Int'.
