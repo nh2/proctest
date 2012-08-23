@@ -64,6 +64,7 @@ module Test.Proctest (
 , asUtf8Str
 
  -- * Running and stopping programs
+, ProcessHandles
 , run
 , RunException (..)
 , isRunning
@@ -112,6 +113,10 @@ asUtf8 = decodeUtf8
 -- | Treats a 'BS.ByteString' as UTF-8 decoded 'String'.
 asUtf8Str :: BS.ByteString -> String
 asUtf8Str = unpack . asUtf8
+
+
+-- | Short cut. ALWAYS use the order stdin, stdout, stderr, process handle.
+type ProcessHandles = (Handle, Handle, Handle, ProcessHandle)
 
 
 -- | Runs a program with the given arguemtns.
