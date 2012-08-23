@@ -164,7 +164,7 @@ closeHandles = mapM_ hClose
 -- | A microsecond timeout, or 'NoTimeout'.
 data Timeout = NoTimeout | Micros Int
 
--- | An error to be thrown if something is to be converted into timeout
+-- | An error to be thrown if something is to be converted into 'Timeout'
 -- that does not fit into 'Int'.
 data InvalidTimeoutError = InvalidTimeoutError String deriving (Show, Typeable)
 
