@@ -101,7 +101,7 @@ module Test.Proctest (
 
 import Control.Concurrent (threadDelay)
 import Control.Exception (Exception (..), throw, throwIO)
-import Data.Text
+import Data.Text (Text, unpack)
 import Data.Text.Encoding (decodeUtf8)
 import Data.Typeable
 import qualified Data.ByteString as BS
